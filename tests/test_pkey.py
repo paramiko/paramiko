@@ -532,6 +532,40 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(key, key)
         self.assertTrue(key.can_sign())
 
+    def test_ed25519_write_private_key(self):
+        key = Ed25519Key.from_private_key_file(_support("ed25519.key"))
+        f = StringIO()
+        key.write_private_key(f)
+        f.seek(0)
+        content = f.getvalue()
+        self.assertIn("BEGIN OPENSSH PRIVATE KEY", content)
+        reloaded = Ed25519Key.from_private_key(f)
+        self.assertEqual(key, reloaded)
+        self.assertTrue(reloaded.can_sign())
+
+    def test_ed25519_write_private_key_encrypted(self):
+        key = Ed25519Key.from_private_key_file(_support("ed25519.key"))
+        f = StringIO()
+        key.write_private_key(f, password="secretpassword")
+        f.seek(0)
+        content = f.getvalue()
+        self.assertIn("BEGIN OPENSSH PRIVATE KEY", content)
+        reloaded = Ed25519Key.from_private_key(f, password="secretpassword")
+        self.assertEqual(key, reloaded)
+        self.assertTrue(reloaded.can_sign())
+
+    def test_ed25519_write_private_key_file(self):
+        key = Ed25519Key.from_private_key_file(_support("ed25519.key"))
+        newfile = _support("ed25519.key") + ".new"
+        try:
+            key.write_private_key_file(newfile)
+            reloaded = Ed25519Key.from_private_key_file(newfile)
+            self.assertEqual(key, reloaded)
+            self.assertTrue(reloaded.can_sign())
+        finally:
+            if os.path.exists(newfile):
+                os.remove(newfile)
+
     def test_keyfile_is_actually_encrypted(self):
         # Read an existing encrypted private key
         file_ = _support("test_rsa_password.key")

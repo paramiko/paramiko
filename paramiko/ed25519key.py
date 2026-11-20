@@ -14,15 +14,23 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
-from typing import Union
+from io import RawIOBase
+from typing import Optional, Union
 
 import bcrypt
 import nacl.signing
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives.ciphers import Cipher
 
 from paramiko.message import Message
-from paramiko.pkey import OPENSSH_AUTH_MAGIC, PKey, _unpad_openssh
+from paramiko.pkey import (
+    OPENSSH,
+    OPENSSH_AUTH_MAGIC,
+    FileFormat,
+    PKey,
+    _unpad_openssh,
+)
 from paramiko.ssh_exception import PasswordRequiredException, SSHException
 from paramiko.util import b
 
@@ -196,6 +204,65 @@ class Ed25519Key(PKey):
         elif self.can_verify():
             return self._verifying_key
         return None
+
+    @property
+    def private_key(self) -> Optional[Ed25519PrivateKey]:
+        if self.can_sign():
+            return Ed25519PrivateKey.from_private_bytes(
+                self._signing_key.encode()
+            )
+        return None
+
+    def write_private_key_file(
+        self,
+        filename: str,
+        password: Optional[str] = None,
+        file_format: FileFormat = OPENSSH,
+    ):
+        """
+        Write private key contents into a file.  If the password is not
+        ``None``, the key is encrypted before writing.
+
+        :param str filename: name of the file to write
+        :param str password:
+            an optional password to use to encrypt the key file
+        :param FileFormat file_format:
+            what format+encoding pair to use; defaults to OPENSSH.
+
+        :raises: ``IOError`` -- if there was an error writing the file
+        :raises: `.SSHException` -- if the key is invalid
+        """
+        self._write_private_key_file(
+            filename,
+            self.private_key,
+            file_format=file_format,
+            password=password,
+        )
+
+    def write_private_key(
+        self,
+        file_obj: RawIOBase,
+        password: Optional[str] = None,
+        file_format: FileFormat = OPENSSH,
+    ):
+        """
+        Write private key contents into a file (or file-like) object.  If the
+        password is not ``None``, the key is encrypted before writing.
+
+        :param file_obj: the file-like object to write into
+        :param str password: an optional password to use to encrypt the key
+        :param FileFormat file_format:
+            what format+encoding pair to use; defaults to OPENSSH.
+
+        :raises: ``IOError`` -- if there was an error writing to the file
+        :raises: `.SSHException` -- if the key is invalid
+        """
+        self._write_private_key(
+            file_obj,
+            self.private_key,
+            file_format=file_format,
+            password=password,
+        )
 
     def sign_ssh_data(self, data, algorithm=None):
         m = Message()
