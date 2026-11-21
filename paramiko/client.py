@@ -82,8 +82,9 @@ class SSHClient(ClosingContextManager):
         this method will not be saved back by `save_host_keys`.
 
         This method can be called multiple times.  Each new set of host keys
-        will be merged with the existing set (new replacing old if there are
-        conflicts).
+        will be merged with the existing system set.  For the same hostname
+        and key type, the first key loaded takes precedence over a conflicting
+        key loaded later.  See `.HostKeys.load` for the merge behavior.
 
         If ``filename`` is left as ``None``, an attempt will be made to read
         keys from the user's local "known hosts" file, as used by OpenSSH,
@@ -114,8 +115,15 @@ class SSHClient(ClosingContextManager):
         saves them, when connecting to a previously-unknown server.
 
         This method can be called multiple times.  Each new set of host keys
-        will be merged with the existing set (new replacing old if there are
-        conflicts).  When automatically saving, the last hostname is used.
+        will be merged with the existing local set.  For the same hostname
+        and key type, the first key loaded takes precedence over a conflicting
+        key loaded later.  See `.HostKeys.load` for the merge behavior.
+        When automatically saving, the last filename passed to this method
+        is used.
+
+        If a hostname is present in the system host keys, `connect` uses that
+        set instead of the local set, regardless of the order in which the
+        two sets were loaded.
 
         :param str filename: the filename to read
 
