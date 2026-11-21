@@ -2,6 +2,13 @@
 Changelog
 =========
 
+- :bug:`2489` (also :issue:`2572`) Correct the host-key loading documentation:
+  loading files merges entries without replacing conflicting keys, and lookups
+  use the first matching key for a hostname and key type. Clarify system-key
+  precedence and the filename used for automatic saving. This does not change
+  runtime behavior. Thanks to ``andrewjones-bond`` and Christoph Anton Mitterer
+  for the reports; patch by Aschenbath.
+
 - :release:`4.0.0 <2025-08-03>`
 - :support:`-` Administrivia update:
 
