@@ -81,8 +81,9 @@ class HostKeys(MutableMapping):
         If this method is called multiple times, the host keys are merged
         without clearing the existing entries.  Conflicting keys are appended,
         not replaced: when multiple keys match the same hostname and key type,
-        `lookup` returns the first matching key.  Loading a later file therefore
-        does not override an earlier key.  Use `add` to replace a key explicitly.
+        `lookup` returns the first matching key.  Loading a later file
+        therefore does not override an earlier key.  Use `add` to replace
+        a key explicitly.
 
         :param str filename: name of the file to read host keys from
 
