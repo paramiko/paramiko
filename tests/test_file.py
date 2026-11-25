@@ -147,6 +147,40 @@ class BufferedFileTest(unittest.TestCase):
         self.assertEqual(f.read(20), b"Too small.  Enough.")
         f.close()
 
+    def test_read_small_chunks_does_not_reslice_buffer(self):
+        """
+        regression test: read() must not copy the remaining buffer on
+        every call, which made reading a buffered file of size N in small
+        chunks cost O(N^2) time.
+        """
+        f = LoopbackFile("r+", 4096)
+        f.write(b"x" * 4096)
+        f.flush()
+        self.assertEqual(f.read(1), b"x")
+        buffer_after_first_read = f._rbuffer
+        for _ in range(100):
+            self.assertEqual(f.read(1), b"x")
+        self.assertIs(f._rbuffer, buffer_after_first_read)
+        f.close()
+
+    def test_read_small_chunks_data_correct(self):
+        """
+        verify that data read in small chunks is byte identical across
+        buffer refills of a longer stream.
+        """
+        f = LoopbackFile("r+", 4096)
+        data = bytes(bytearray((i % 256 for i in range(10000))))
+        f.write(data)
+        f.flush()
+        out = bytearray()
+        while True:
+            chunk = f.read(7)
+            if not chunk:
+                break
+            out.extend(chunk)
+        self.assertEqual(bytes(out), data)
+        f.close()
+
     def test_read_all(self):
         """
         verify that read(-1) returns everything left in the file.

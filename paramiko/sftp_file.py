@@ -270,6 +270,7 @@ class SFTPFile(BufferedFile):
         else:
             self._realpos = self._pos = self._get_size() + offset
         self._rbuffer = bytes()
+        self._roffset = 0
 
     def stat(self):
         """
