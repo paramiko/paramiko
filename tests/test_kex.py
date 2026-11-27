@@ -624,7 +624,5 @@ class KexAvailabilityTest(unittest.TestCase):
         fake_x25519.generate.side_effect = InternalError(
             "digital envelope routines::unsupported", []
         )
-        with patch(
-            "paramiko.kex_curve25519.X25519PrivateKey", fake_x25519
-        ):
+        with patch("paramiko.kex_curve25519.X25519PrivateKey", fake_x25519):
             self.assertFalse(KexCurve25519.is_available())
