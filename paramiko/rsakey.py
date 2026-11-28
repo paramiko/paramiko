@@ -70,10 +70,15 @@ class RSAKey(PKey):
         else:
             self._check_type_and_load_cert(
                 msg=msg,
-                # NOTE: this does NOT change when using rsa2 signatures; it's
-                # purely about key loading, not exchange or verification
-                key_type=self.name,
-                cert_type="ssh-rsa-cert-v01@openssh.com",
+                # Accept RFC 8332 rsa-sha2-* algorithm labels in addition to
+                # ssh-rsa for interoperability with servers that label the
+                # public-key blob with the negotiated signature algorithm.
+                key_type=(self.name, "rsa-sha2-256", "rsa-sha2-512"),
+                cert_type=(
+                    "ssh-rsa-cert-v01@openssh.com",
+                    "rsa-sha2-256-cert-v01@openssh.com",
+                    "rsa-sha2-512-cert-v01@openssh.com",
+                ),
             )
             self.key = rsa.RSAPublicNumbers(
                 e=msg.get_mpint(), n=msg.get_mpint()
