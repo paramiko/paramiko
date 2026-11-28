@@ -600,3 +600,16 @@ class KeyTest(unittest.TestCase):
         finally:
             if os.path.exists(new):
                 os.unlink(new)
+
+    def test_rsa_public_key_accepts_rsa_sha2_labels(self):
+        key = RSAKey.generate(2048)
+        nums = key.public_numbers
+        for label in ("ssh-rsa", "rsa-sha2-256", "rsa-sha2-512"):
+            with self.subTest(label=label):
+                msg = Message()
+                msg.add_string(label)
+                msg.add_mpint(nums.e)
+                msg.add_mpint(nums.n)
+                parsed = RSAKey(msg=msg)
+                self.assertEqual(parsed, key)
+
